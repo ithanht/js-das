@@ -4,7 +4,7 @@
  */
 var KthLargest = function(k, nums) {
   this.k = k;
-  this.heap = new MinHeapByArray();
+  this.heap = new ArrayHeap([], (a, b) => (a - b) > 0 ? true : false);
   nums.forEach(n => this.add(n));
 };
 
@@ -15,12 +15,12 @@ var KthLargest = function(k, nums) {
 KthLargest.prototype.add = function(val) {
   if (this.heap.size() < this.k) {
     this.heap.heappush(val);
-  } else if (val > this.heap.peak()) {
+  } else if (val > this.heap.peek()) {
     this.heap.heappush(val);
     this.heap.pophead();
   }
 
-  return this.heap.peak();
+  return this.heap.peek();
 };
 
 /**
@@ -29,10 +29,14 @@ KthLargest.prototype.add = function(val) {
  * var param_1 = obj.add(val)
  */
 
-class MinHeapByArray {
-  constructor(data = []) {
+// https://leetcode.com/problems/kth-largest-element-in-a-stream/
+
+
+class ArrayHeap {
+  constructor(data = [], comparator) {
     this.data = data;
-    this.comparator = (a, b) => a - b;
+    if (typeof comparator !== "function") throw "comparator can't be anything other than a function";
+    this.comparator = comparator;
     this.heapify();
   }
 
@@ -48,10 +52,10 @@ class MinHeapByArray {
     [this.data[index1], this.data[index2]] = [this.data[index2], this.data[index1]];
   }
 
-  bubleUp(index) {
+  bubbleUp(index) {
     while (index > 0) {
       const parentIndex = (index - 1) >> 1;
-      if (this.comparator(this.data[index], this.data[parentIndex]) < 0) {
+      if (this.comparator(this.data[parentIndex], this.data[index])) {
         this.swap(index, parentIndex);
         index = parentIndex;
       } else {
@@ -69,16 +73,18 @@ class MinHeapByArray {
       let findIndex = index;
       if (
         leftIndex <= lastIndex &&
-        this.comparator(this.data[leftIndex], this.data[findIndex]) < 0
+        this.comparator(this.data[findIndex], this.data[leftIndex])
       ) {
         findIndex = leftIndex;
       }
+
       if (
         rightIndex <= lastIndex &&
-        this.comparator(this.data[rightIndex], this.data[findIndex]) < 0
+        this.comparator(this.data[findIndex], this.data[rightIndex])
       ) {
         findIndex = rightIndex;
       }
+
       if (index !== findIndex) {
         this.swap(index, findIndex);
         index = findIndex;
@@ -90,7 +96,7 @@ class MinHeapByArray {
 
   heappush(value) {
     this.data.push(value);
-    this.bubleUp(this.size() - 1);
+    this.bubbleUp(this.size() - 1);
   }
 
   pophead() {
@@ -108,7 +114,7 @@ class MinHeapByArray {
     return this.data.length;
   }
 
-  peak() {
+  peek() {
     if (this.size() === 0) return null;
     return this.data[0];
   }
